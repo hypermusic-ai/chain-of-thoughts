@@ -114,7 +114,7 @@ def _concat_units(units: List[Dict[str, Any]]) -> Dict[str, Any]:
                 for scalar in ("pitch","time","duration","velocity","numerator","denominator")]
 
     tracks = {instr: _pack(instr, combined[instr]) for instr in ORDERED_INSTRS}
-    payload = {"instrument_meta": INSTRUMENT_META, "tracks": tracks}
+    payload = {"instrument_meta": INSTRUMENT_META, "ordered_instruments": ORDERED_INSTRS, "tracks": tracks}
     return {"payload": payload, "schedule": suite_schedule, "total_ticks": cumulative}
 
 

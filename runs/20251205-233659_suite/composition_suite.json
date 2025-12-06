@@ -1,0 +1,84 @@
+{
+  "instrument_meta": {
+    "grand_piano": {
+      "display_name": "Grand Piano",
+      "gm_program": 0,
+      "bank": 0,
+      "bank_msb": 0,
+      "bank_lsb": 0
+    }
+  },
+  "ordered_instruments": [
+    "grand_piano"
+  ],
+  "tracks": {
+    "grand_piano": [
+      {
+        "feature_path": "/grand_piano/pitch",
+        "data": [
+          64,
+          69,
+          81,
+          76,
+          64,
+          76,
+          81,
+          69,
+          57,
+          69,
+          74,
+          62
+        ]
+      },
+      {
+        "feature_path": "/grand_piano/time",
+        "data": [
+          0,
+          4,
+          8
+        ]
+      },
+      {
+        "feature_path": "/grand_piano/duration",
+        "data": [
+          4,
+          4,
+          4
+        ]
+      },
+      {
+        "feature_path": "/grand_piano/velocity",
+        "data": [
+          64,
+          68,
+          73,
+          69,
+          65,
+          69,
+          74,
+          68,
+          64,
+          69,
+          73,
+          67
+        ]
+      },
+      {
+        "feature_path": "/grand_piano/numerator",
+        "data": [
+          3,
+          3,
+          3
+        ]
+      },
+      {
+        "feature_path": "/grand_piano/denominator",
+        "data": [
+          4,
+          4,
+          4
+        ]
+      }
+    ]
+  }
+}

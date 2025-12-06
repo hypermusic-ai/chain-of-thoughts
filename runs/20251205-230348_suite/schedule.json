@@ -1,0 +1,12 @@
+[
+  {
+    "unit_label": "001",
+    "start_tick": 0,
+    "unit_ticks": 12
+  },
+  {
+    "unit_label": "002",
+    "start_tick": 12,
+    "unit_ticks": 8
+  }
+]

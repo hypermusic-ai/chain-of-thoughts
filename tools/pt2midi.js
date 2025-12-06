@@ -7,9 +7,9 @@ const path = require('path');
 const JZZ = require('jzz');
 require('jzz-midi-smf')(JZZ);
 
-// ---- Constants copied from your visualizer ----
+// ---- Constants (defaults; overridden by payload.instrument_meta / ordered_instruments) ----
 const CHANNELS = Array.from({ length: 16 }, (_, i) => i).filter(c => c !== 9);
-const GM_PROGRAMS = {
+const DEFAULT_GM_PROGRAMS = {
   alto_flute:   73,
   bass_clarinet:71,
   trumpet:      56,
@@ -17,7 +17,7 @@ const GM_PROGRAMS = {
   cello:        42,
   double_bass:  43
 };
-const INSTR_ORDER = [
+const DEFAULT_ORDER = [
   'alto_flute',
   'bass_clarinet',
   'trumpet',
@@ -37,14 +37,28 @@ const FRIENDLY_NAMES = {
 // ---- Helpers from your web code (adapted for Node) ----
 function metaFor(instrKey, INSTRUMENT_META) {
   const m = (INSTRUMENT_META || {})[instrKey] || {};
+  const fallbackProgram = Number.isInteger(DEFAULT_GM_PROGRAMS[instrKey]) ? DEFAULT_GM_PROGRAMS[instrKey] : 0;
   return {
     name:    m.display_name || FRIENDLY_NAMES[instrKey] || instrKey,
-    program: Number.isInteger(m.gm_program) ? m.gm_program : GM_PROGRAMS[instrKey],
+    program: Number.isInteger(m.gm_program) ? m.gm_program : fallbackProgram,
     bankMSB: Number.isInteger(m.bank_msb) ? m.bank_msb
            : Number.isInteger(m.bank)     ? m.bank
            : 0,
     bankLSB: Number.isInteger(m.bank_lsb) ? m.bank_lsb : 0
   };
+}
+
+function deriveInstrOrder(payload) {
+  if (payload && Array.isArray(payload.ordered_instruments) && payload.ordered_instruments.length) {
+    return payload.ordered_instruments;
+  }
+  if (payload && payload.instrument_meta && typeof payload.instrument_meta === 'object') {
+    return Object.keys(payload.instrument_meta);
+  }
+  if (payload && payload.tracks && typeof payload.tracks === 'object') {
+    return Object.keys(payload.tracks);
+  }
+  return DEFAULT_ORDER;
 }
 
 // Flatten {tracks:{instr:[{feature_path,data}...]}} → uniform array
@@ -67,7 +81,7 @@ function normalizeInput(parsed) {
   throw new Error('Unsupported PT JSON shape.');
 }
 
-function convertPTToMIDIEvents(ptResponse, INSTRUMENT_META) {
+function convertPTToMIDIEvents(ptResponse, INSTRUMENT_META, instrOrder) {
   // Group by "/instrument/.../scalar"
   const groups = {};
   ptResponse.forEach(({ feature_path, data }) => {
@@ -107,10 +121,10 @@ function convertPTToMIDIEvents(ptResponse, INSTRUMENT_META) {
   const trackByInstr = new Map();
   const chanByTrack  = new Map();
 
-  let extraStart = INSTR_ORDER.length;
+  let extraStart = instrOrder.length;
   function ensureTrack(instr) {
     if (trackByInstr.has(instr)) return trackByInstr.get(instr);
-    let trackIndex = INSTR_ORDER.includes(instr) ? INSTR_ORDER.indexOf(instr) : extraStart++;
+    let trackIndex = instrOrder.includes(instr) ? instrOrder.indexOf(instr) : extraStart++;
     trackByInstr.set(instr, trackIndex);
     const chan = CHANNELS[trackIndex % CHANNELS.length];
     chanByTrack.set(trackIndex, chan);
@@ -157,8 +171,9 @@ function convertPTToMIDIEvents(ptResponse, INSTRUMENT_META) {
 
 function writeSMF(payload, outPath) {
   const INSTRUMENT_META = payload.instrument_meta || {};
+  const instrOrder = deriveInstrOrder(payload);
   const flat = normalizeInput(payload);
-  const { conductorEvents, noteBuckets } = convertPTToMIDIEvents(flat, INSTRUMENT_META);
+  const { conductorEvents, noteBuckets } = convertPTToMIDIEvents(flat, INSTRUMENT_META, instrOrder);
 
   const PPQ = 960;
   const smf = JZZ.MIDI.SMF(1, PPQ);
@@ -183,8 +198,8 @@ function writeSMF(payload, outPath) {
 
   // Determine present instruments, ordered like your visualizer
   const present = [...noteBuckets.keys()];
-  const orderedInstrs = INSTR_ORDER.filter(i => present.includes(i))
-    .concat(present.filter(i => !INSTR_ORDER.includes(i)));
+  const orderedInstrs = instrOrder.filter(i => present.includes(i))
+    .concat(present.filter(i => !instrOrder.includes(i)));
 
   // Build per-instrument tracks
   orderedInstrs.forEach((instrKey, idx) => {

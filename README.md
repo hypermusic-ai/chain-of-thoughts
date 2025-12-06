@@ -54,6 +54,11 @@ OPENAI_API_KEY = "sk-..."   # your OpenAI key
 
 For DCN auth, the pipeline will use `PRIVATE_KEY` from the environment if present; otherwise it creates a temporary account for the session.
 
+## Configure instruments (user-editable)
+
+The instrument list, ranges, GM programs, and polyphony flags are **required** and are read from `instruments.json` (root of the repo). Edit that file to change the setup (add/remove instruments, tweak ranges or display names). The order of `ordered_instruments` drives track order in JSON and MIDI. Add `"polyphonic": true` per instrument (e.g., for `grand_piano`) to allow overlapping durations and chords; omit/false keeps monophonic capping. You can point to another config via `INSTRUMENT_CONFIG=/path/to/custom.json` before running. The run will fail fast if no instrument config is found.
+Remember to write prompts that name the instruments you configured (the code also appends the configured ranges to every prompt automatically).
+
 ---
 
 ## Project layout

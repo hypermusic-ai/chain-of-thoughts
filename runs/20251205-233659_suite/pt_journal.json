@@ -1,0 +1,25 @@
+[
+  {
+    "action": "execute_pt",
+    "unit": "001",
+    "bar_index": 1,
+    "pt_name": "grand_piano_quartal_quintal_chords_b1_1764974757705_1323",
+    "N": 12,
+    "seeds": {
+      "time": 0,
+      "duration": 4,
+      "pitch": 64,
+      "velocity": 64,
+      "numerator": 3,
+      "denominator": 4
+    },
+    "sample_counts": {
+      "time": 12,
+      "duration": 12,
+      "pitch": 12,
+      "velocity": 12,
+      "numerator": 12,
+      "denominator": 12
+    }
+  }
+]

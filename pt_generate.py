@@ -16,7 +16,7 @@ from openai import OpenAI, APITimeoutError
 
 from pt_config import (
     API_BASE, ORDERED_INSTRS, INSTRUMENTS, INSTRUMENT_META,
-    BAR_TICKS_BY_BAR, meter_from_ticks
+    BAR_TICKS_BY_BAR, meter_from_ticks, instruments_summary_lines, is_polyphonic
 )
 from pt_prompts import load_system_prompt, render_user_prompt_file, PROMPTS_DIR
 from dcn_client import DCNClient
@@ -47,13 +47,12 @@ def _normalize_exec(samples_list: List[dict]) -> Dict[str, List[int]]:
         st[tail] = list(s["data"])
     return st
 
-def _cap_to_next_onset_and_bar(times: List[int], durations: List[int], bar_ticks: int) -> tuple[list[int], list[int]]:
+def _cap_durations(times: List[int], durations: List[int], bar_ticks: int, *, allow_overlap: bool) -> tuple[list[int], list[int]]:
     """
-    Make durations safe:
-      - For each note i, cap to next onset (or bar end for the last note)
-      - Cap to bar end (<= bar_ticks)
+    Duration safety:
+      - Always cap to bar end (<= bar_ticks)
+      - If allow_overlap is False: also cap to next onset (monophonic safety)
       - Drop zero/negative-length notes after capping
-    Assumes times are strictly increasing (DCN/PT ensures this after validation).
     """
     if not times:
         return [], []
@@ -63,9 +62,10 @@ def _cap_to_next_onset_and_bar(times: List[int], durations: List[int], bar_ticks
     for i in range(n):
         t = T[i]
         nxt = T[i + 1] if i + 1 < n else bar_ticks
-        max_ok = max(0, nxt - t)
-        if D[i] > max_ok:
-            D[i] = max_ok
+        if not allow_overlap:
+            max_ok = max(0, nxt - t)
+            if D[i] > max_ok:
+                D[i] = max_ok
         if t + D[i] > bar_ticks:
             D[i] = max(0, bar_ticks - t)
     keep_idx = [i for i in range(n) if D[i] > 0 and T[i] < bar_ticks]
@@ -123,9 +123,9 @@ def _must_uint(x, label: str) -> int:
 # ---------- context summary ----------
 def _summarize_unit(per_instr_unit: Dict[str, Dict[str, List[int]]],
                     bars_count: int, total_ticks: int, num: int, den: int,
-                    label: str) -> str:
+                    label: str, ordered_instrs: List[str]) -> str:
     lines = [f"UNIT {label}: bars={bars_count}, total_ticks={total_ticks}, meter={num}/{den}"]
-    for instr in ORDERED_INSTRS:
+    for instr in ordered_instrs:
         s = per_instr_unit[instr]
         notes = len(s["time"])
         if notes == 0:
@@ -200,6 +200,10 @@ def generate_unit_from_template(
     """
     label = label or template_path.stem
 
+    ordered_instrs = list(ORDERED_INSTRS)
+    instruments = INSTRUMENTS
+    instrument_meta = INSTRUMENT_META
+
     # --- DCN auth/account -----------------------------------------------------
     if acct is None:
         priv = os.getenv("PRIVATE_KEY")
@@ -226,11 +230,16 @@ def generate_unit_from_template(
 
     # --- Prompts ---------------------------------------------------------------
     system_text = load_system_prompt(fallback="")
+    sys_lines = ["INSTRUMENT SETUP (AUTO)",
+                 f"- Instruments (one feature/run_plan entry each; total {len(ordered_instrs)}): {', '.join(ordered_instrs)}",
+                 "- Hard ranges (MIDI):"]
+    sys_lines.extend(instruments_summary_lines(ordered_instrs, instruments))
+    system_text = system_text.rstrip() + "\n\n" + "\n".join(sys_lines) + "\n"
     user_text   = render_user_prompt_file(
         template_path,
         bar_ticks=bar_ticks,
         num=NUM, den=DEN,
-        instruments=INSTRUMENTS,
+        instruments=instruments,
     )
 
     # --- OpenAI call (Responses API + Structured Outputs) ---------------------
@@ -263,6 +272,9 @@ def generate_unit_from_template(
         "content": [{"type": "input_text", "text": user_text}]
     })
 
+    instr_enum = ordered_instrs
+    feat_count = len(instr_enum)
+
     resp = oai.responses.create(
             model="gpt-5",
             input=messages,
@@ -282,8 +294,8 @@ def generate_unit_from_template(
                                         "bundle_name": {"type": "string"},
                                         "features": {
                                             "type": "array",
-                                            "minItems": 6,
-                                            "maxItems": 6,
+                                            "minItems": feat_count,
+                                            "maxItems": feat_count,
                                             "items": {
                                                 "type": "object",
                                                 "properties": {
@@ -292,10 +304,7 @@ def generate_unit_from_template(
                                                         "properties": {
                                                             "instrument": {
                                                                 "type": "string",
-                                                                "enum": [
-                                                                    "alto_flute","violin","bass_clarinet",
-                                                                    "trumpet","cello","double_bass"
-                                                                ]
+                                                                "enum": instr_enum
                                                             },
                                                             "bar":  {"type": "integer", "minimum": 0},
                                                             "role": {"type": "string"}
@@ -361,8 +370,8 @@ def generate_unit_from_template(
                                         },
                                         "run_plan": {
                                             "type": "array",
-                                            "minItems": 6,
-                                            "maxItems": 6,
+                                            "minItems": feat_count,
+                                            "maxItems": feat_count,
                                             "items": {
                                                 "type": "object",
                                                 "properties": {
@@ -388,8 +397,8 @@ def generate_unit_from_template(
                                         },
                                         "created_feature_names": {
                                             "type": "array",
-                                            "minItems": 6,
-                                            "maxItems": 6,
+                                            "minItems": feat_count,
+                                            "maxItems": feat_count,
                                             "items": {"type": "string"}
                                         }
                                     },
@@ -404,7 +413,7 @@ def generate_unit_from_template(
                     "strict": True
                 }
             },   
-            reasoning={"effort": "high"}, # set minimal/low/medium/high (time vs. reasoning trade-off)
+            reasoning={"effort": "medium"}, # set minimal/low/medium/high (time vs. reasoning trade-off)
         )
 
 
@@ -421,7 +430,7 @@ def generate_unit_from_template(
 
     # Unit accumulators
     per_instr_unit = {i: {"pitch": [], "time": [], "duration": [], "velocity": [], "numerator": [], "denominator": []}
-                      for i in ORDERED_INSTRS}
+                      for i in ordered_instrs}
     schedule: List[Dict[str, Any]] = []
     cumulative = 0
 
@@ -514,27 +523,30 @@ def generate_unit_from_template(
             })
 
         # Build per-bar instrument map (to compute actual_end, then offset)
-        per_instr_bar = {i: {"pitch": [], "time": [], "duration": [], "velocity": []} for i in ORDERED_INSTRS}
+        per_instr_bar = {i: {"pitch": [], "time": [], "duration": [], "velocity": []} for i in ordered_instrs}
         for fname, streams in exec_by_feature.items():
             instr = next((f["meta"].get("instrument") for f in feats if f["pt"]["name"] == fname), None)
             if not instr:
                 continue
+            if instr not in per_instr_bar:
+                raise RuntimeError(f"[{label}] {bar_label}: instrument '{instr}' not in configured list {ordered_instrs}")
             for key in ("pitch","time","duration","velocity"):
                 if key in streams:
                     per_instr_bar[instr][key].extend(list(streams[key]))
         
         # Cap durations to next onset and to the bar boundary
-        for instr in ORDERED_INSTRS:
+        for instr in ordered_instrs:
             t = per_instr_bar[instr]["time"]
             d = per_instr_bar[instr]["duration"]
             if t and d:
-                t_cap, d_cap = _cap_to_next_onset_and_bar(t, d, bar_ticks)
+                allow_overlap = is_polyphonic(instr)
+                t_cap, d_cap = _cap_durations(t, d, bar_ticks, allow_overlap=allow_overlap)
                 per_instr_bar[instr]["time"] = t_cap
                 per_instr_bar[instr]["duration"] = d_cap
 
         # Measure actual end AFTER capping
         actual_end = 0
-        for instr in ORDERED_INSTRS:
+        for instr in ordered_instrs:
             times = per_instr_bar[instr]["time"]
             durs  = per_instr_bar[instr]["duration"]
             if times and durs:
@@ -555,7 +567,7 @@ def generate_unit_from_template(
             "bar_ticks": bar_ticks,
             "meter": {"numerator": NUM, "denominator": DEN},
         })
-        for instr in ORDERED_INSTRS:
+        for instr in ordered_instrs:
             src = per_instr_bar[instr]
             per_instr_unit[instr]["time"].extend([t + cumulative for t in src["time"]])
             for key in ("pitch","duration","velocity"):
@@ -567,12 +579,12 @@ def generate_unit_from_template(
         cumulative += slot_length
 
     # Build unit-level visualiser payload (returned to caller)
-    tracks = {instr: _instrument_pack(instr, per_instr_unit[instr]) for instr in ORDERED_INSTRS}
-    payload = {"instrument_meta": INSTRUMENT_META, "tracks": tracks}
+    tracks = {instr: _instrument_pack(instr, per_instr_unit[instr]) for instr in ordered_instrs}
+    payload = {"instrument_meta": instrument_meta, "ordered_instruments": ordered_instrs, "tracks": tracks}
 
     # Human-readable summary for context chaining (returned; not written here)
     unit_summary_text = _summarize_unit(per_instr_unit, bars_count=len(schedule), total_ticks=cumulative,
-                                        num=NUM, den=DEN, label=label)
+                                        num=NUM, den=DEN, label=label, ordered_instrs=ordered_instrs)
 
     print(f"[{label}] Unit total ticks: {cumulative}")
 

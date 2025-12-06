@@ -1,0 +1,89 @@
+2025-12-05 23:03:48,420 | INFO     | Logging to /Users/sunsetsobserver/chain-of-thoughts/runs/20251205-230348_suite/suite.log
+2025-12-05 23:03:48,421 | INFO     | New run with 2 templates.
+2025-12-05 23:03:48,422 | INFO     | Wrote partial outputs (0/2).
+2025-12-05 23:03:48,423 | INFO     | Generating units...
+2025-12-05 23:03:48,489 | INFO     | Unit 001 (1/2): start
+2025-12-05 23:12:33,596 | INFO     | HTTP Request: POST https://api.openai.com/v1/responses "HTTP/1.1 200 OK"
+2025-12-05 23:12:40,667 | INFO     | HTTP Request: GET https://api.decentralised.art/nonce/0xEa2DdA730384D10B2AF89e2E2474C519422aFE98 "HTTP/1.1 200 OK"
+2025-12-05 23:12:40,703 | INFO     | HTTP Request: POST https://api.decentralised.art/auth "HTTP/1.1 200 OK"
+2025-12-05 23:12:40,793 | INFO     | HTTP Request: GET https://api.decentralised.art/execute/alto_flute_upper_airy_line_b1_1764972753649_96f1/8/[(0;0),(0;0),(1;0),(68;0),(52;0),(3;0),(4;0)] "HTTP/1.1 200 OK"
+2025-12-05 23:12:40,877 | INFO     | HTTP Request: GET https://api.decentralised.art/nonce/0xEa2DdA730384D10B2AF89e2E2474C519422aFE98 "HTTP/1.1 200 OK"
+2025-12-05 23:12:40,908 | INFO     | HTTP Request: POST https://api.decentralised.art/auth "HTTP/1.1 200 OK"
+2025-12-05 23:12:40,994 | INFO     | HTTP Request: GET https://api.decentralised.art/execute/bass_clarinet_low_mid_weave_b1_1764972753649_ad0a/5/[(0;0),(0;0),(1;0),(56;0),(56;0),(3;0),(4;0)] "HTTP/1.1 200 OK"
+2025-12-05 23:12:41,086 | INFO     | HTTP Request: GET https://api.decentralised.art/nonce/0xEa2DdA730384D10B2AF89e2E2474C519422aFE98 "HTTP/1.1 200 OK"
+2025-12-05 23:12:41,123 | INFO     | HTTP Request: POST https://api.decentralised.art/auth "HTTP/1.1 200 OK"
+2025-12-05 23:12:41,215 | INFO     | HTTP Request: GET https://api.decentralised.art/execute/trumpet_sparse_color_b1_1764972753649_1f40/4/[(0;0),(0;0),(2;0),(68;0),(56;0),(3;0),(4;0)] "HTTP/1.1 200 OK"
+2025-12-05 23:12:41,308 | INFO     | HTTP Request: GET https://api.decentralised.art/nonce/0xEa2DdA730384D10B2AF89e2E2474C519422aFE98 "HTTP/1.1 200 OK"
+2025-12-05 23:12:41,339 | INFO     | HTTP Request: POST https://api.decentralised.art/auth "HTTP/1.1 200 OK"
+2025-12-05 23:12:41,435 | INFO     | HTTP Request: GET https://api.decentralised.art/execute/violin_upper_interlace_b1_1764972753649_28cd/7/[(0;0),(0;0),(1;0),(71;0),(50;0),(3;0),(4;0)] "HTTP/1.1 200 OK"
+2025-12-05 23:12:41,519 | INFO     | HTTP Request: GET https://api.decentralised.art/nonce/0xEa2DdA730384D10B2AF89e2E2474C519422aFE98 "HTTP/1.1 200 OK"
+2025-12-05 23:12:41,550 | INFO     | HTTP Request: POST https://api.decentralised.art/auth "HTTP/1.1 200 OK"
+2025-12-05 23:12:41,640 | INFO     | HTTP Request: GET https://api.decentralised.art/execute/cello_low_mid_support_b1_1764972753649_5aec/5/[(0;0),(0;0),(1;0),(52;0),(56;0),(3;0),(4;0)] "HTTP/1.1 200 OK"
+2025-12-05 23:12:41,725 | INFO     | HTTP Request: GET https://api.decentralised.art/nonce/0xEa2DdA730384D10B2AF89e2E2474C519422aFE98 "HTTP/1.1 200 OK"
+2025-12-05 23:12:41,771 | INFO     | HTTP Request: POST https://api.decentralised.art/auth "HTTP/1.1 200 OK"
+2025-12-05 23:12:41,855 | INFO     | HTTP Request: GET https://api.decentralised.art/execute/double_bass_foundation_b1_1764972753649_ddce/4/[(0;0),(0;0),(2;0),(36;0),(56;0),(3;0),(4;0)] "HTTP/1.1 200 OK"
+2025-12-05 23:12:41,856 | INFO     | Unit 001: done in 533.4s | ticks=12
+2025-12-05 23:12:41,861 | INFO     | Unit 002 (2/2): start
+2025-12-05 23:16:46,105 | INFO     | HTTP Request: POST https://api.openai.com/v1/responses "HTTP/1.1 200 OK"
+2025-12-05 23:16:53,164 | INFO     | HTTP Request: GET https://api.decentralised.art/nonce/0xEa2DdA730384D10B2AF89e2E2474C519422aFE98 "HTTP/1.1 200 OK"
+2025-12-05 23:16:53,200 | INFO     | HTTP Request: POST https://api.decentralised.art/auth "HTTP/1.1 200 OK"
+2025-12-05 23:16:53,291 | INFO     | HTTP Request: GET https://api.decentralised.art/execute/alto_flute_mid_band_color_b2_1764973006111_792c/2/[(0;0),(0;0),(4;0),(67;0),(124;0),(2;0),(4;0)] "HTTP/1.1 200 OK"
+2025-12-05 23:16:53,378 | INFO     | HTTP Request: GET https://api.decentralised.art/nonce/0xEa2DdA730384D10B2AF89e2E2474C519422aFE98 "HTTP/1.1 200 OK"
+2025-12-05 23:16:53,409 | INFO     | HTTP Request: POST https://api.decentralised.art/auth "HTTP/1.1 200 OK"
+2025-12-05 23:16:53,499 | INFO     | HTTP Request: GET https://api.decentralised.art/execute/bass_clarinet_mid_band_support_b2_1764973006111_0d5c/2/[(0;0),(0;0),(4;0),(55;0),(124;0),(2;0),(4;0)] "HTTP/1.1 200 OK"
+2025-12-05 23:16:53,658 | INFO     | HTTP Request: GET https://api.decentralised.art/nonce/0xEa2DdA730384D10B2AF89e2E2474C519422aFE98 "HTTP/1.1 200 OK"
+2025-12-05 23:16:53,691 | INFO     | HTTP Request: POST https://api.decentralised.art/auth "HTTP/1.1 200 OK"
+2025-12-05 23:16:53,781 | INFO     | HTTP Request: GET https://api.decentralised.art/execute/trumpet_high_band_brightness_b2_1764973006111_85b3/2/[(0;0),(0;0),(4;0),(70;0),(124;0),(2;0),(4;0)] "HTTP/1.1 200 OK"
+2025-12-05 23:16:53,876 | INFO     | HTTP Request: GET https://api.decentralised.art/nonce/0xEa2DdA730384D10B2AF89e2E2474C519422aFE98 "HTTP/1.1 200 OK"
+2025-12-05 23:16:53,909 | INFO     | HTTP Request: POST https://api.decentralised.art/auth "HTTP/1.1 200 OK"
+2025-12-05 23:16:53,991 | INFO     | HTTP Request: GET https://api.decentralised.art/execute/violin_high_band_soaring_b2_1764973006111_7eba/2/[(0;0),(0;0),(4;0),(73;0),(124;0),(2;0),(4;0)] "HTTP/1.1 200 OK"
+2025-12-05 23:16:54,159 | INFO     | HTTP Request: GET https://api.decentralised.art/nonce/0xEa2DdA730384D10B2AF89e2E2474C519422aFE98 "HTTP/1.1 200 OK"
+2025-12-05 23:16:54,192 | INFO     | HTTP Request: POST https://api.decentralised.art/auth "HTTP/1.1 200 OK"
+2025-12-05 23:16:54,281 | INFO     | HTTP Request: GET https://api.decentralised.art/execute/cello_mid_low_anchor_b2_1764973006111_0888/2/[(0;0),(0;0),(4;0),(59;0),(124;0),(2;0),(4;0)] "HTTP/1.1 200 OK"
+2025-12-05 23:16:54,375 | INFO     | HTTP Request: GET https://api.decentralised.art/nonce/0xEa2DdA730384D10B2AF89e2E2474C519422aFE98 "HTTP/1.1 200 OK"
+2025-12-05 23:16:54,412 | INFO     | HTTP Request: POST https://api.decentralised.art/auth "HTTP/1.1 200 OK"
+2025-12-05 23:16:54,507 | INFO     | HTTP Request: GET https://api.decentralised.art/execute/double_bass_low_foundation_b2_1764973006111_7ad5/2/[(0;0),(0;0),(4;0),(41;0),(124;0),(2;0),(4;0)] "HTTP/1.1 200 OK"
+2025-12-05 23:16:54,509 | INFO     | Unit 002: done in 252.6s | ticks=8
+2025-12-05 23:16:54,519 | INFO     | All units generated. Stitching final outputs...
+2025-12-05 23:16:54,525 | INFO     | Suite written:
+2025-12-05 23:16:54,525 | INFO     |   • /Users/sunsetsobserver/chain-of-thoughts/runs/20251205-230348_suite/composition_suite.json
+2025-12-05 23:16:54,525 | INFO     |   • /Users/sunsetsobserver/chain-of-thoughts/runs/20251205-230348_suite/schedule.json
+2025-12-05 23:16:54,525 | INFO     |   • /Users/sunsetsobserver/chain-of-thoughts/runs/20251205-230348_suite/pt_journal.json
+2025-12-05 23:16:54,526 | INFO     |   • /Users/sunsetsobserver/chain-of-thoughts/runs/20251205-230348_suite/manifest.json
+2025-12-05 23:16:54,723 | WARNING  | MIDI export failed (non-fatal). Output:
+node:internal/modules/cjs/loader:1152
+  throw err;
+  ^
+
+Error: Cannot find module 'jzz'
+Require stack:
+- /Users/sunsetsobserver/chain-of-thoughts/tools/pt2midi.js
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1149:15)
+    at Module._load (node:internal/modules/cjs/loader:990:27)
+    at Module.require (node:internal/modules/cjs/loader:1237:19)
+    at require (node:internal/modules/helpers:176:18)
+    at Object.<anonymous> (/Users/sunsetsobserver/chain-of-thoughts/tools/pt2midi.js:7:13)
+    at Module._compile (node:internal/modules/cjs/loader:1378:14)
+    at Module._extensions..js (node:internal/modules/cjs/loader:1437:10)
+    at Module.load (node:internal/modules/cjs/loader:1212:32)
+    at Module._load (node:internal/modules/cjs/loader:1028:12)
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:142:12) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [ '/Users/sunsetsobserver/chain-of-thoughts/tools/pt2midi.js' ]
+}
+
+Node.js v21.6.2
+
+2025-12-05 23:20:20,306 | INFO     | Logging to /Users/sunsetsobserver/chain-of-thoughts/runs/20251205-230348_suite/suite.log
+2025-12-05 23:20:20,308 | INFO     | Resuming with saved template order (2 files).
+2025-12-05 23:20:20,309 | INFO     | Resume: 2/2 units already done.
+2025-12-05 23:20:20,312 | INFO     | Wrote partial outputs (2/2).
+2025-12-05 23:20:20,312 | INFO     | Generating units...
+2025-12-05 23:20:20,327 | INFO     | All units generated. Stitching final outputs...
+2025-12-05 23:20:20,329 | INFO     | Suite written:
+2025-12-05 23:20:20,329 | INFO     |   • /Users/sunsetsobserver/chain-of-thoughts/runs/20251205-230348_suite/composition_suite.json
+2025-12-05 23:20:20,329 | INFO     |   • /Users/sunsetsobserver/chain-of-thoughts/runs/20251205-230348_suite/schedule.json
+2025-12-05 23:20:20,329 | INFO     |   • /Users/sunsetsobserver/chain-of-thoughts/runs/20251205-230348_suite/pt_journal.json
+2025-12-05 23:20:20,329 | INFO     |   • /Users/sunsetsobserver/chain-of-thoughts/runs/20251205-230348_suite/manifest.json
+2025-12-05 23:20:20,514 | INFO     | Wrote MIDI: /Users/sunsetsobserver/chain-of-thoughts/runs/20251205-230348_suite/composition_suite.mid
+2025-12-05 23:20:20,514 | INFO     |   • /Users/sunsetsobserver/chain-of-thoughts/runs/20251205-230348_suite/composition_suite.mid

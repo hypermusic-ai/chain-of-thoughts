@@ -1,0 +1,32 @@
+PROMPT 001:
+METER: 3/4
+
+TITLE
+Bars 1-8 — Jazzy isomorphic quartal and quintal harmonies, chords. Compose exactly 8 bars in a 3/4 meter.
+
+INSTRUMENTS (EXACT)
+Use this single instrument and no others:
+[piano].
+
+RHYTHM:
+The chords should be quarter note long each. Each pitch that should belong to the same chord should have the same time value (meaning that the transformation should add 0 for pitches belonging to the same chord when building features). Overlapping sustains are allowed; keep all note ends within each bar.
+
+
+
+HARD RANGES (MIDI NUMBERS — MUST STAY INSIDE)
+- grand_piano: [21..108]
+- Use ONLY these instruments. Emit exactly one PT/run_plan pair per instrument above; no extras.
+
+METER & GRID FOR THIS UNIT
+- Ticks per bar: 12
+- Seeds must set numerator=3, denominator=4 (transforms add 0)
+
+RANGE REMINDER
+Design pitch seeds and add/sub steps so that the simulated pitches never exceed the hard ranges;
+if a step would leave the range, reflect direction immediately to remain inside. No external clamping.
+
+
+SUMMARY 001:
+UNIT 001: bars=8, total_ticks=96, meter=3/4
+- grand_piano: notes=96, pitch[50..81], avg_vel=77.6, last_pitch=74, last_on=92, last_end=96
+

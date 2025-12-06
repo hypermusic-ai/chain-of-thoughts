@@ -1,0 +1,16 @@
+{
+  "templates": [
+    "/Users/sunsetsobserver/chain-of-thoughts/prompts/user/001.txt"
+  ],
+  "done_units": [
+    "001"
+  ],
+  "ctx_bundles": [
+    "{\"bars\":[{\"bundle_name\":\"Bar 1 — Jazzy isomorphic quartal/quintal harmonies (chordal stacks)\",\"features\":[{\"meta\":{\"instrument\":\"grand_piano\",\"bar\":1,\"role\":\"quartal_quintal_chords\"},\"pt\":{\"name\":\"gp_bar1_quartal_quintal\",\"dimensions\":[{\"feature_name\":\"time\",\"transformations\":[{\"name\":\"add\",\"args\":[0]},{\"name\":\"add\",\"args\":[0]},{\"name\":\"add\",\"args\":[0]},{\"name\":\"add\",\"args\":[4]},{\"name\":\"add\",\"args\":[0]},{\"name\":\"add\",\"args\":[0]},{\"name\":\"add\",\"args\":[0]},{\"name\":\"add\",\"args\":[4]},{\"name\":\"add\",\"args\":[0]},{\"name\":\"add\",\"args\":[0]},{\"name\":\"add\",\"args\":[0]}]},{\"feature_name\":\"duration\",\"transformations\":[{\"name\":\"add\",\"args\":[0]}]},{\"feature_name\":\"pitch\",\"transformations\":[{\"name\":\"add\",\"args\":[5]},{\"name\":\"add\",\"args\":[12]},{\"name\":\"subtract\",\"args\":[5]},{\"name\":\"subtract\",\"args\":[12]},{\"name\":\"add\",\"args\":[12]},{\"name\":\"add\",\"args\":[5]},{\"name\":\"subtract\",\"args\":[12]},{\"name\":\"subtract\",\"args\":[12]},{\"name\":\"add\",\"args\":[12]},{\"name\":\"add\",\"args\":[5]},{\"name\":\"subtract\",\"args\":[12]}]},{\"feature_name\":\"velocity\",\"transformations\":[{\"name\":\"add\",\"args\":[4]},{\"name\":\"add\",\"args\":[5]},{\"name\":\"subtract\",\"args\":[4]},{\"name\":\"subtract\",\"args\":[4]},{\"name\":\"add\",\"args\":[4]},{\"name\":\"add\",\"args\":[5]},{\"name\":\"subtract\",\"args\":[6]},{\"name\":\"subtract\",\"args\":[4]},{\"name\":\"add\",\"args\":[5]},{\"name\":\"add\",\"args\":[4]},{\"name\":\"subtract\",\"args\":[6]}]},{\"feature_name\":\"numerator\",\"transformations\":[{\"name\":\"add\",\"args\":[0]}]},{\"feature_name\":\"denominator\",\"transformations\":[{\"name\":\"add\",\"args\":[0]}]}]}}],\"run_plan\":[{\"feature_name\":\"gp_bar1_quartal_quintal\",\"N\":12,\"seeds\":{\"time\":0,\"duration\":4,\"pitch\":64,\"velocity\":64,\"numerator\":3,\"denominator\":4}}],\"created_feature_names\":[\"gp_bar1_quartal_quintal\"]}]}"
+  ],
+  "progress": {
+    "completed": 1,
+    "total": 1
+  },
+  "updated_at": "2025-12-05T23:45:59"
+}

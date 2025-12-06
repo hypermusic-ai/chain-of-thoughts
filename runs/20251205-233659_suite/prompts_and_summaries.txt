@@ -1,0 +1,31 @@
+PROMPT 001:
+METER: 3/4
+
+TITLE
+Bar 1 — Jazzy isomorphic quartal and quintal harmonies, chords. 
+
+INSTRUMENTS (EXACT)
+Use this single instrument and no others:
+[piano].
+
+FORM FOR THIS PROMPT
+Compose exactly one bar (12 ticks at 1/16 grid). All notes must end ≤ tick 12. Realize the above purely through your PT design (transformations + seeds). Return a single bundle with exactly one feature (for the piano) and a run_plan that produces the line as specified.
+
+
+HARD RANGES (MIDI NUMBERS — MUST STAY INSIDE)
+- grand_piano: [21..108]
+- Use ONLY these instruments. Emit exactly one PT/run_plan pair per instrument above; no extras.
+
+METER & GRID FOR THIS UNIT
+- Ticks per bar: 12
+- Seeds must set numerator=3, denominator=4 (transforms add 0)
+
+RANGE REMINDER
+Design pitch seeds and add/sub steps so that the simulated pitches never exceed the hard ranges;
+if a step would leave the range, reflect direction immediately to remain inside. No external clamping.
+
+
+SUMMARY 001:
+UNIT 001: bars=1, total_ticks=12, meter=3/4
+- grand_piano: notes=3, pitch[57..81], avg_vel=68.6, last_pitch=62, last_on=8, last_end=12
+

@@ -1,0 +1,21 @@
+{
+  "ordered_instruments": [
+    "grand_piano"
+  ],
+  "instruments": {
+    "grand_piano": {
+      "range": [21, 108],
+      "tess": [40, 80],
+      "display_name": "Grand Piano",
+      "gm_program": 0,
+      "polyphonic": true
+    }
+  },
+  "instrument_meta": {
+    "grand_piano": {
+      "display_name": "Grand Piano",
+      "gm_program": 0,
+      "bank": 0
+    }
+  }
+}

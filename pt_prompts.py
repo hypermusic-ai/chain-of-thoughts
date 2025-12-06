@@ -70,6 +70,7 @@ def _render_text_core(
     for name, meta in instruments.items():
         lo, hi = meta["range"]
         lines.append(f"- {name}: [{lo}..{hi}]")
+    lines.append("- Use ONLY these instruments. Emit exactly one PT/run_plan pair per instrument above; no extras.")
 
     # Also re-assert meter/ticks so the JSON uses correct seeds
     lines.append(f"\nMETER & GRID FOR THIS UNIT")
