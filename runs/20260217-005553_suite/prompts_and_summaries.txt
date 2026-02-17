@@ -1,0 +1,92 @@
+PROMPT 001:
+METER: 4/4
+
+TITLE
+Bars 1–8 — Complex, flowing piano texture with evolving quartal and quintal harmonies. Compose exactly 8 bars in a 4/4 meter.
+
+INSTRUMENTS (EXACT)
+Use this single instrument and no others:
+[piano].
+
+HARMONY
+- Use primarily quartal and quintal harmonies (stacks of perfect 4ths and 5ths), coloured by occasional major/minor seconds and thirds.
+- Keep a clear but floating modal centre around D–G (D Lydian / G Mixolydian flavour).
+- Phrase-level harmonic plan for 8 bars:
+  - Bars 1–2: centre around D (e.g., D–G–C, G–C–F type sonorities).
+  - Bars 3–4: shift centre to F (F–Bb–Eb, C–F–Bb, etc.).
+  - Bars 5–6: centre around G/A with slightly brighter, more tense stacks (more seconds inside chords).
+  - Bars 7–8: gently return towards D, smoothing out tensions and ending on a resonant but non-triadic quartal/quintal chord.
+- Avoid simple root-position triads. Chords should feel like layered fourths/fifths with added colour tones.
+- Maintain smooth voice-leading: most voices move by step or small interval (≤ minor third), with occasional larger leaps in outer voices.
+
+REGISTER & VOICING
+- Use the piano range approximately from A1 to C7, with the main harmonic body between C2 and C6.
+- Left hand: low–middle register (A1–C4), combining bass notes and mid-register quartal blocks.
+- Right hand: mid–high register (G3–C7), carrying singing melodic lines and upper extensions.
+- At any moment, aim for 3–6 sounding voices in total (including held notes) so the texture is rich but pianistically plausible.
+
+FORM & TEXTURE BY BARS
+
+Bars 1–2 (Opening: layered arpeggiated harmony)
+- Left hand:
+  - Bar 1: on beat 1, strike a low bass note (half note tied to beat 3), then from beat 2 onward play a broken quartal chord pattern in 8th notes across beats 2–4.
+  - Bar 2: repeat the rhythmic idea but slightly alter register and voicing (e.g., some chord tones shifted up an octave), still centred on D-related quartal stacks.
+- Right hand:
+  - Bars 1–2: introduce a fluid melodic line mostly in quarter and 8th notes, with at least one syncopated event per bar (e.g., 8th tied over a beat).
+  - End bar 2 with a longer note (dotted half or half tied to an 8th) that overlaps the last left-hand arpeggio, marking the end of the opening cell.
+
+Bars 3–4 (Development: more rhythmic complexity and new harmonic centre)
+- Left hand:
+  - Maintain 8th-note motion but introduce groupings like 3+3+2 across the bar (still fitting into 4/4).
+  - Use broken quartal chords and occasional two-note “punches” (fourths or fifths) on offbeats.
+- Right hand:
+  - Bars 3–4: increase rhythmic interest: add at least one group of 16th notes in each bar (e.g., a quick turn or neighbour figure) and occasional syncopated entries.
+  - Outline the new F-centred harmony with quartal/quintal intervals, rising slightly in register by bar 4.
+  - End bar 4 with a sustained chord (minimum half note) in the right hand over a subtly shifting left-hand figure, hinting at a move towards G.
+
+Bars 5–6 (Climax: densest rhythm and register expansion)
+- Left hand:
+  - Introduce a short ostinato pattern spanning two beats (e.g., beat 1–2) in 8th notes, repeated twice per bar.
+  - Occasionally add mid-register quartal chords (3–4 notes) on strong beats while a low bass tone sustains beneath (whole note or tied half notes).
+- Right hand:
+  - Bars 5–6 should be the most rhythmically active:
+    - Use 16th-note groups and triplets, including at least one clear 3-against-2 gesture (e.g., triplet in right hand over straight 8ths in left hand).
+    - Reach into the high register (up to B6–C7) for brilliance, maintaining quartal/quintal logic in chordal moments.
+  - At the end of bar 6, land on a tense but stable quartal chord (with added seconds) that clearly prepares the return towards D.
+
+Bars 7–8 (Resolution: thinning texture but coherent closure)
+- Left hand:
+  - Reduce density: fewer continuous 8th-note runs, more half and quarter notes.
+  - Bar 7: one sustained low D (whole note) with occasional mid-register quartal chord on beats 2 or 3.
+  - Bar 8: lightly arpeggiated quartal chord on beat 1, then a simpler accompaniment pattern (e.g., broken dyads in 8ths or quarters) that supports the final right-hand phrase.
+- Right hand:
+  - Bars 7–8: transform the previously active motifs into more lyrical, spaced lines.
+  - Use mostly quarter and 8th notes, with one short 16th-note embellishment in bar 7 recalling the climax.
+  - Descend from higher register back to mid-register by bar 8.
+  - Final sonority (end of bar 8): a wide-spaced quartal/quintal chord centred on D, with at least one low D in the left hand and a clear, non-triadic upper voicing in the right hand (no conventional tonal cadence).
+
+GENERAL CONSTRAINTS
+- Compose exactly 8 bars in 4/4; each bar must contain rhythmic values that add up to exactly 4 beats.
+- When multiple pitches form a chord attacked together, give them the same start time and duration (they belong to one harmonic event).
+- Overlapping sustains are encouraged to create resonance, but keep all note endings within the bar and avoid unplayable stretches.
+- Ensure that at least one voice (often in the right hand) forms a clear, singable melodic line throughout, even when the texture is dense.
+
+
+
+HARD RANGES (MIDI NUMBERS — MUST STAY INSIDE)
+- grand_piano: [21..108]
+- Use ONLY these instruments. Emit exactly one PT/run_plan pair per instrument above; no extras.
+
+METER & GRID FOR THIS UNIT
+- Ticks per bar: 16
+- Seeds must set numerator=4, denominator=4 (transforms add 0)
+
+RANGE REMINDER
+Design pitch seeds and add/sub steps so that the simulated pitches never exceed the hard ranges;
+if a step would leave the range, reflect direction immediately to remain inside. No external clamping.
+
+
+SUMMARY 001:
+UNIT 001: bars=8, total_ticks=128, meter=4/4
+- grand_piano: notes=166, pitch[31..96], avg_vel=75.9, last_pitch=43, last_on=124, last_end=128
+

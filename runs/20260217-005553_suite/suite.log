@@ -1,0 +1,16 @@
+2026-02-17 00:55:53,841 | INFO     | Logging to /Users/sunsetsobserver/hypermusic_corp/chain-of-thoughts/runs/20260217-005553_suite/suite.log
+2026-02-17 00:55:53,841 | INFO     | Running DCN endpoint preflight checks (/feature, /particle, /execute), required transformations bootstrap=on...
+2026-02-17 00:55:54,015 | INFO     | Preflight checks passed.
+2026-02-17 00:55:54,017 | INFO     | New run with 1 templates.
+2026-02-17 00:55:54,018 | INFO     | Wrote partial outputs (0/1).
+2026-02-17 00:55:54,018 | INFO     | Generating units...
+2026-02-17 00:55:54,035 | INFO     | Unit 001 (1/1): start
+2026-02-17 01:12:12,239 | INFO     | HTTP Request: POST https://api.openai.com/v1/responses "HTTP/1.1 200 OK"
+2026-02-17 01:12:24,913 | INFO     | Unit 001: done in 990.9s | ticks=128
+2026-02-17 01:12:24,918 | INFO     | All units generated. Stitching final outputs...
+2026-02-17 01:12:24,920 | INFO     | Suite written:
+2026-02-17 01:12:24,920 | INFO     |   • /Users/sunsetsobserver/hypermusic_corp/chain-of-thoughts/runs/20260217-005553_suite/composition_suite.json
+2026-02-17 01:12:24,920 | INFO     |   • /Users/sunsetsobserver/hypermusic_corp/chain-of-thoughts/runs/20260217-005553_suite/schedule.json
+2026-02-17 01:12:24,920 | INFO     |   • /Users/sunsetsobserver/hypermusic_corp/chain-of-thoughts/runs/20260217-005553_suite/pt_journal.json
+2026-02-17 01:12:24,920 | INFO     |   • /Users/sunsetsobserver/hypermusic_corp/chain-of-thoughts/runs/20260217-005553_suite/manifest.json
+2026-02-17 01:12:24,920 | INFO     | MIDI export skipped (NO_MIDI=1).

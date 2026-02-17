@@ -1,0 +1,202 @@
+[
+  {
+    "action": "execute_particle",
+    "unit": "001",
+    "bar_index": 1,
+    "pt_name": "grand_piano_flowing_arpeggiated_harmony___sync_melody_b1_1771287132389_3c3f",
+    "particle_name": "grand_piano_flowing_arpeggiated_harmony___sync_melody_b1_1771287132389_3c3f__particle",
+    "N": 18,
+    "seeds": {
+      "time": 0,
+      "duration": 8,
+      "pitch": 50,
+      "velocity": 72,
+      "numerator": 4,
+      "denominator": 4
+    },
+    "running_instances_count": 7,
+    "sample_counts": {
+      "time": 18,
+      "duration": 18,
+      "pitch": 18,
+      "velocity": 18,
+      "numerator": 18,
+      "denominator": 18
+    }
+  },
+  {
+    "action": "execute_particle",
+    "unit": "001",
+    "bar_index": 2,
+    "pt_name": "grand_piano_variation__end_with_overlapping_long_melody_tone_b2_1771287134518_42ed",
+    "particle_name": "grand_piano_variation__end_with_overlapping_long_melody_tone_b2_1771287134518_42ed__particle",
+    "N": 15,
+    "seeds": {
+      "time": 0,
+      "duration": 8,
+      "pitch": 50,
+      "velocity": 76,
+      "numerator": 4,
+      "denominator": 4
+    },
+    "running_instances_count": 7,
+    "sample_counts": {
+      "time": 15,
+      "duration": 15,
+      "pitch": 15,
+      "velocity": 15,
+      "numerator": 15,
+      "denominator": 15
+    }
+  },
+  {
+    "action": "execute_particle",
+    "unit": "001",
+    "bar_index": 3,
+    "pt_name": "grand_piano_development__3_3_2_feel___16th_flourish_b3_1771287136153_6466",
+    "particle_name": "grand_piano_development__3_3_2_feel___16th_flourish_b3_1771287136153_6466__particle",
+    "N": 18,
+    "seeds": {
+      "time": 0,
+      "duration": 8,
+      "pitch": 53,
+      "velocity": 68,
+      "numerator": 4,
+      "denominator": 4
+    },
+    "running_instances_count": 7,
+    "sample_counts": {
+      "time": 18,
+      "duration": 18,
+      "pitch": 18,
+      "velocity": 18,
+      "numerator": 18,
+      "denominator": 18
+    }
+  },
+  {
+    "action": "execute_particle",
+    "unit": "001",
+    "bar_index": 4,
+    "pt_name": "grand_piano_development_peak__sustained_RH_quartal_chord_over_LH_motion_b4_1771287137743_931c",
+    "particle_name": "grand_piano_development_peak__sustained_RH_quartal_chord_over_LH_motion_b4_1771287137743_931c__particle",
+    "N": 22,
+    "seeds": {
+      "time": 0,
+      "duration": 8,
+      "pitch": 53,
+      "velocity": 76,
+      "numerator": 4,
+      "denominator": 4
+    },
+    "running_instances_count": 7,
+    "sample_counts": {
+      "time": 22,
+      "duration": 22,
+      "pitch": 22,
+      "velocity": 22,
+      "numerator": 22,
+      "denominator": 22
+    }
+  },
+  {
+    "action": "execute_particle",
+    "unit": "001",
+    "bar_index": 5,
+    "pt_name": "grand_piano_climax__ostinato___rapid_figures__register_expansion_to_C7_b5_1771287139539_e196",
+    "particle_name": "grand_piano_climax__ostinato___rapid_figures__register_expansion_to_C7_b5_1771287139539_e196__particle",
+    "N": 33,
+    "seeds": {
+      "time": 0,
+      "duration": 16,
+      "pitch": 43,
+      "velocity": 90,
+      "numerator": 4,
+      "denominator": 4
+    },
+    "running_instances_count": 7,
+    "sample_counts": {
+      "time": 33,
+      "duration": 33,
+      "pitch": 33,
+      "velocity": 33,
+      "numerator": 33,
+      "denominator": 33
+    }
+  },
+  {
+    "action": "execute_particle",
+    "unit": "001",
+    "bar_index": 6,
+    "pt_name": "grand_piano_climax_continuation__high_flourish_then_settle_on_tense_quartal_chord_b6_1771287140955_97e6",
+    "particle_name": "grand_piano_climax_continuation__high_flourish_then_settle_on_tense_quartal_chord_b6_1771287140955_97e6__particle",
+    "N": 29,
+    "seeds": {
+      "time": 0,
+      "duration": 16,
+      "pitch": 57,
+      "velocity": 88,
+      "numerator": 4,
+      "denominator": 4
+    },
+    "running_instances_count": 7,
+    "sample_counts": {
+      "time": 29,
+      "duration": 29,
+      "pitch": 29,
+      "velocity": 29,
+      "numerator": 29,
+      "denominator": 29
+    }
+  },
+  {
+    "action": "execute_particle",
+    "unit": "001",
+    "bar_index": 7,
+    "pt_name": "grand_piano_resolution__sustained_low_D___sparse_quartal_blocks___small_16th_embellishment_b7_1771287142339_ab85",
+    "particle_name": "grand_piano_resolution__sustained_low_D___sparse_quartal_blocks___small_16th_embellishment_b7_1771287142339_ab85__particle",
+    "N": 14,
+    "seeds": {
+      "time": 0,
+      "duration": 16,
+      "pitch": 50,
+      "velocity": 68,
+      "numerator": 4,
+      "denominator": 4
+    },
+    "running_instances_count": 7,
+    "sample_counts": {
+      "time": 14,
+      "duration": 14,
+      "pitch": 14,
+      "velocity": 14,
+      "numerator": 14,
+      "denominator": 14
+    }
+  },
+  {
+    "action": "execute_particle",
+    "unit": "001",
+    "bar_index": 8,
+    "pt_name": "grand_piano_closure__arpeggiated_quartal_opening___final_wide_D_centred_sonority_b8_1771287143676_d439",
+    "particle_name": "grand_piano_closure__arpeggiated_quartal_opening___final_wide_D_centred_sonority_b8_1771287143676_d439__particle",
+    "N": 17,
+    "seeds": {
+      "time": 0,
+      "duration": 8,
+      "pitch": 38,
+      "velocity": 62,
+      "numerator": 4,
+      "denominator": 4
+    },
+    "running_instances_count": 7,
+    "sample_counts": {
+      "time": 17,
+      "duration": 17,
+      "pitch": 17,
+      "velocity": 17,
+      "numerator": 17,
+      "denominator": 17
+    }
+  }
+]
