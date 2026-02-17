@@ -1,18 +1,28 @@
 """
-dcn_client.py — Thin client for your DCN HTTP API + `dcn` SDK execution,
-with resilient token handling:
+dcn_client.py — Thin client for the DCN HTTP API with resilient token handling:
 - ensure_auth(acct) to log in once
 - try_refresh_or_reauth(acct) on 401 refresh failures
-- post_feature(..., acct=acct) retries after refresh/reauth
+- post_feature/post_particle/execute_particle retries after refresh/reauth
 """
 
 from __future__ import annotations
-from typing import Dict, List, Optional
+
+from typing import Any, Dict, List, Optional
+import json
+
 import requests
 from eth_account import Account
 from eth_account.messages import encode_defunct
 
+
 class DCNClient:
+    REQUIRED_TRANSFORMATIONS: Dict[str, str] = {
+        "add": "return x + args[0];",
+        "subtract": "return x - args[0];",
+        "mul": "return x * args[0];",
+        "div": "return args[0] == 0 ? 0 : x / args[0];",
+    }
+
     def __init__(self, base_url: str, timeout: float = 10.0):
         self.base_url: str = base_url
         self.timeout: float = float(timeout)
@@ -22,7 +32,6 @@ class DCNClient:
             "Content-Type": "application/json",
         })
         self.access_token: Optional[str] = None
-        self.refresh_token: Optional[str] = None
 
     # ---------- internals ----------
     def _handle_response(self, r: requests.Response):
@@ -39,9 +48,16 @@ class DCNClient:
         h: Dict[str, str] = {}
         if self.access_token:
             h["Authorization"] = f"Bearer {self.access_token}"
-        if self.refresh_token:
-            h["X-Refresh-Token"] = self.refresh_token
         return h
+
+    def _post_with_retry(self, path: str, payload: Dict[str, Any], *, acct: Account) -> requests.Response:
+        self.ensure_auth(acct)
+        url = f"{self.base_url}{path}"
+        r = self.session.post(url, json=payload, headers=self._authz_headers(), timeout=self.timeout)
+        if r.status_code == 401:
+            self.try_refresh_or_reauth(acct)
+            r = self.session.post(url, json=payload, headers=self._authz_headers(), timeout=self.timeout)
+        return r
 
     # ---------- public HTTP ----------
     def get_nonce(self, address: str) -> str:
@@ -55,90 +71,199 @@ class DCNClient:
 
     def post_auth(self, address: str, message: str, signature: str) -> Dict:
         url = f"{self.base_url}/auth"
-        r = self.session.post(url, json={"address": address, "message": message, "signature": signature}, timeout=self.timeout)
+        r = self.session.post(
+            url,
+            json={"address": address, "message": message, "signature": signature},
+            timeout=self.timeout,
+        )
         data = self._handle_response(r)
         self.access_token = data.get("access_token")
-        self.refresh_token = data.get("refresh_token")
-        return data
-
-    def refresh_tokens(self) -> Dict:
-        url = f"{self.base_url}/refresh"
-        r = self.session.post(url, json={}, headers=self._authz_headers(), timeout=self.timeout)
-        data = self._handle_response(r)
-        # server may rotate tokens on refresh
-        self.access_token = data.get("access_token", self.access_token)
-        self.refresh_token = data.get("refresh_token", self.refresh_token)
         return data
 
     # ---------- robust auth helpers ----------
     def ensure_auth(self, acct: Account):
         """Login if we don't yet have tokens."""
-        if self.access_token and self.refresh_token:
+        if self.access_token:
             return
         nonce = self.get_nonce(acct.address)
-        msg   = f"Login nonce: {nonce}"
-        sig   = acct.sign_message(encode_defunct(text=msg)).signature.hex()
+        msg = f"Login nonce: {nonce}"
+        sig = acct.sign_message(encode_defunct(text=msg)).signature.hex()
         self.post_auth(acct.address, msg, sig)
-        if not (self.access_token and self.refresh_token):
+        if not self.access_token:
             raise RuntimeError("Auth failed — missing tokens")
 
     def try_refresh_or_reauth(self, acct: Account):
-        """Attempt refresh; if that fails, do a fresh /auth with the SAME account."""
-        try:
-            self.refresh_tokens()
-        except requests.HTTPError:
-            # fall back to a full re-auth
-            nonce = self.get_nonce(acct.address)
-            msg   = f"Login nonce: {nonce}"
-            sig   = acct.sign_message(encode_defunct(text=msg)).signature.hex()
-            self.post_auth(acct.address, msg, sig)
+        """Do a fresh /auth with the same account (server currently exposes no refresh route)."""
+        nonce = self.get_nonce(acct.address)
+        msg = f"Login nonce: {nonce}"
+        sig = acct.sign_message(encode_defunct(text=msg)).signature.hex()
+        self.post_auth(acct.address, msg, sig)
 
-    # ---------- feature calls with resilient retry ----------
-    def post_feature(self, payload: Dict, *, acct: Account) -> Dict:
-        """
-        POST /feature with retry:
-         1) ensure_auth
-         2) POST
-         3) if 401, refresh or re-auth then POST again
-        """
-        self.ensure_auth(acct)
-        url = f"{self.base_url}/feature"
-        r = self.session.post(url, json=payload, headers=self._authz_headers(), timeout=self.timeout)
-        if r.status_code == 401:
-            self.try_refresh_or_reauth(acct)
-            r = self.session.post(url, json=payload, headers=self._authz_headers(), timeout=self.timeout)
+    # ---------- feature/particle/execute ----------
+    def post_feature(self, payload: Dict[str, Any], *, acct: Account) -> Dict[str, Any]:
+        r = self._post_with_retry("/feature", payload, acct=acct)
         return self._handle_response(r)
 
-    def get_feature(self, name: str) -> Dict:
+    def post_particle(self, payload: Dict[str, Any], *, acct: Account) -> Dict[str, Any]:
+        r = self._post_with_retry("/particle", payload, acct=acct)
+        return self._handle_response(r)
+
+    def get_feature(self, name: str) -> Dict[str, Any]:
         url = f"{self.base_url}/feature/{name}"
         r = self.session.get(url, headers=self._authz_headers(), timeout=self.timeout)
         return self._handle_response(r)
 
-    # ---------- `dcn` SDK execute ----------
-    def execute_pt(self, acct: Account, pt_name: str, N: int,
-                   seeds: Dict[str, int], dims: List[dict]) -> List[dict]:
-        import dcn  # optional until used
+    def get_particle(self, name: str) -> Dict[str, Any]:
+        url = f"{self.base_url}/particle/{name}"
+        r = self.session.get(url, headers=self._authz_headers(), timeout=self.timeout)
+        return self._handle_response(r)
 
-        running = [(0, 0)] * (1 + len(dims))
-        running[0] = (0, 0)
-        for i, d in enumerate(dims):
-            fname = (d.get("feature_name") or "").strip().lower()
-            sp = int(seeds.get(fname, 0))
-            running[i + 1] = (sp, 0)
+    def get_transformation(self, name: str) -> Dict[str, Any]:
+        url = f"{self.base_url}/transformation/{name}"
+        r = self.session.get(url, headers=self._authz_headers(), timeout=self.timeout)
+        return self._handle_response(r)
 
-        client = dcn.Client()
-        try:
-            client.login_with_account(acct)
-            result = client.execute(pt_name, int(N), running)
-            out: List[dict] = []
-            for s in result:
-                try:
-                    out.append({"feature_path": s.feature_path, "data": list(s.data)})
-                except Exception:
-                    out.append({"feature_path": s.get("feature_path", ""), "data": list(s.get("data", []))})
-            return out
-        finally:
+    def post_transformation(self, payload: Dict[str, Any], *, acct: Account) -> Dict[str, Any]:
+        r = self._post_with_retry("/transformation", payload, acct=acct)
+        return self._handle_response(r)
+
+    def has_transformation(self, name: str) -> bool:
+        url = f"{self.base_url}/transformation/{name}"
+        r = self.session.get(url, headers=self._authz_headers(), timeout=self.timeout)
+        if r.status_code == 404:
+            return False
+        if 200 <= r.status_code < 300:
+            return True
+        body_preview = (r.text or "").strip().replace("\n", " ")
+        if len(body_preview) > 300:
+            body_preview = body_preview[:300] + "..."
+        raise RuntimeError(
+            f"Failed to check transformation '{name}': status={r.status_code}, response={body_preview}"
+        )
+
+    def ensure_required_transformations(
+        self,
+        *,
+        acct: Account,
+        required: Optional[Dict[str, str]] = None,
+        auto_create: bool = True,
+    ) -> None:
+        required = required or self.REQUIRED_TRANSFORMATIONS
+        missing: List[str] = []
+
+        for name, sol_src in required.items():
+            if self.has_transformation(name):
+                continue
+
+            if not auto_create:
+                missing.append(name)
+                continue
+
+            payload = {"name": name, "sol_src": sol_src}
             try:
-                client.close()
-            except Exception:
-                pass
+                self.post_transformation(payload, acct=acct)
+            except Exception as exc:
+                raise RuntimeError(
+                    f"Failed to auto-create required transformation '{name}'. "
+                    f"Payload: {json.dumps(payload, ensure_ascii=False)}. Error: {exc}"
+                ) from exc
+
+            if not self.has_transformation(name):
+                raise RuntimeError(
+                    f"Transformation '{name}' still missing after creation attempt. "
+                    f"Payload: {json.dumps(payload, ensure_ascii=False)}"
+                )
+
+        if missing:
+            raise RuntimeError(
+                "Missing required transformations: "
+                + ", ".join(missing)
+                + ". Either create them on the server or set auto-bootstrap on."
+            )
+
+    def execute_particle(
+        self,
+        acct: Account,
+        particle_name: str,
+        samples_count: int,
+        running_instances: List[Dict[str, int]],
+    ) -> List[Dict[str, Any]]:
+        payload = {
+            "particle_name": particle_name,
+            "samples_count": int(samples_count),
+            "running_instances": running_instances,
+        }
+        r = self._post_with_retry("/execute", payload, acct=acct)
+        data = self._handle_response(r)
+        if isinstance(data, list):
+            return data
+        raise RuntimeError(f"Unexpected /execute response shape: {type(data).__name__}")
+
+    # ---------- startup checks ----------
+    def preflight_endpoints(
+        self,
+        *,
+        acct: Account,
+        ensure_transformations: bool = True,
+        auto_create_transformations: bool = True,
+    ) -> None:
+        """
+        Lightweight endpoint availability check before generation.
+        Sends intentionally invalid payloads and expects 400 parsing failures.
+        """
+        if ensure_transformations:
+            self.ensure_required_transformations(
+                acct=acct,
+                auto_create=auto_create_transformations,
+            )
+
+        checks = [
+            (
+                "feature",
+                "/feature",
+                {"_preflight": True},
+                {"name": "my_feature", "dimensions": [{"transformations": [{"name": "add", "args": [1]}]}]},
+            ),
+            (
+                "particle",
+                "/particle",
+                {"_preflight": True},
+                {
+                    "name": "my_particle",
+                    "feature_name": "my_feature",
+                    "composite_names": ["", "", "", "", "", ""],
+                    "condition_name": "",
+                    "condition_args": [],
+                },
+            ),
+            (
+                "execute",
+                "/execute",
+                {"_preflight": True},
+                {
+                    "particle_name": "my_particle",
+                    "samples_count": 4,
+                    "running_instances": [{"start_point": 0, "transformation_shift": 0}],
+                },
+            ),
+        ]
+
+        for _, path, invalid_payload, sample_payload in checks:
+            try:
+                r = self._post_with_retry(path, invalid_payload, acct=acct)
+            except requests.RequestException as exc:
+                raise RuntimeError(
+                    f"Preflight failed for {path}: {exc}. "
+                    f"Sample payload: {json.dumps(sample_payload, ensure_ascii=False)}"
+                ) from exc
+
+            if r.status_code in (200, 201, 204, 400):
+                continue
+
+            body_preview = (r.text or "").strip().replace("\n", " ")
+            if len(body_preview) > 500:
+                body_preview = body_preview[:500] + "..."
+            raise RuntimeError(
+                f"Preflight failed for {path}: status={r.status_code}, response={body_preview}. "
+                f"Sample payload: {json.dumps(sample_payload, ensure_ascii=False)}"
+            )

@@ -1,333 +1,256 @@
 # Chain of Thoughts
 
-_write text → get music_
+Write prompt text, generate PT-based music, and export MIDI.
 
-This repo lets you **compose multi-instrument music (as MIDI) by writing a chain of plain-text prompts**.
-Drop `.txt` prompts into `prompts/user/`. The system:
+This repository turns a sequence of prompt files into a stitched multi-instrument composition by:
 
-1. asks **GPT-5** (OpenAI **Responses API**) to emit a strict, machine-readable music bundle,
-2. registers those instructions on the **Decentralised Creative Network (DCN)** as **Performative Transactions (PTs)**,
-3. **executes** the PTs to get note arrays,
-4. **stitches** all units into one piece (`composition_suite.json`), and
-5. (optionally) **exports a .mid** using a small Node tool.
+1. calling OpenAI Responses API with a strict JSON schema,
+2. posting generated features to the DCN server,
+3. auto-wrapping features into particles,
+4. executing particles to get note streams,
+5. stitching all units into one composition JSON,
+6. optionally exporting a `.mid` file.
 
-> You compose in text; the pipeline handles schema, DCN execution, validation, scheduling, and stitching.
+## What You Get
 
----
+Each run writes a suite folder under `runs/<timestamp>_suite/` containing:
 
-## What are DCN and PTs? (plain English)
-
-- **DCN (Decentralised Creative Network)** executes creative **procedures** (PTs) like “generate a note stream.”
-- A **Performative Transaction (PT)** has dimensions (`time`, `duration`, `pitch`, `velocity`, `numerator`, `denominator`), each a list of integer ops (`add`, `subtract`, `mul`, `div`).
-- When you **execute** a PT with seeds and length `N`, DCN returns concrete arrays.
-- Here, GPT-5 **writes PT bundles** (one per instrument per bar). We post them to DCN and execute to obtain the actual notes.
-
-**TL;DR:** You describe the music → GPT-5 writes the **recipe** → DCN **cooks** it → you get JSON (and optionally MIDI).
-
----
+- `composition_suite.json`
+- `schedule.json`
+- `pt_journal.json`
+- `prompts_and_summaries.txt`
+- `manifest.json`
+- `checkpoint.json`
+- `units/*.json`
+- optionally `composition_suite.mid`
 
 ## Requirements
 
-- **Python 3.10+**
-- Python deps:
+- Python 3.10+
+- Node.js 18+ (for MIDI export)
+- A reachable DCN API server
+- OpenAI API key
 
-  ```bash
-  pip install -r requirements.txt
-  ```
-
-- **OpenAI** access to GPT-5
-- **DCN SDK** importable as `dcn` (install per DCN docs)
-- _(Optional, for MIDI export)_ **Node 18+** with `jzz` and `jzz-midi-smf` (installed via `npm install` in this repo)
-
----
-
-## Configure your keys
-
-Create **`secrets.py`** in the project root:
-
-```python
-# secrets.py
-OPENAI_API_KEY = "sk-..."   # your OpenAI key
-```
-
-(Alternatively, set `OPENAI_API_KEY` in your environment.)
-
-For DCN auth, the pipeline will use `PRIVATE_KEY` from the environment if present; otherwise it creates a temporary account for the session.
-
-## Configure instruments (user-editable)
-
-The instrument list, ranges, GM programs, and polyphony flags are **required** and are read from `instruments.json` (root of the repo). Edit that file to change the setup (add/remove instruments, tweak ranges or display names). The order of `ordered_instruments` drives track order in JSON and MIDI. Add `"polyphonic": true` per instrument (e.g., for `grand_piano`) to allow overlapping durations and chords; omit/false keeps monophonic capping. You can point to another config via `INSTRUMENT_CONFIG=/path/to/custom.json` before running. The run will fail fast if no instrument config is found.
-Remember to write prompts that name the instruments you configured (the code also appends the configured ranges to every prompt automatically).
-
----
-
-## Project layout
-
-```
-compose_suite.py      # discovers prompts, builds each unit, stitches final piece
-pt_generate.py        # generates ONE unit (one prompt → 1..N bars), returns data to compose_suite
-pt_prompts.py         # loads system prompt and reads .txt prompt files; parses METER from text
-pt_config.py          # instruments meta & helpers (ranges, display info)
-dcn_client.py         # DCN HTTP + SDK wrapper: auth, post_feature, execute_pt
-tools/pt2midi.js      # (Node) PT-JSON → .mid writer using jzz + jzz-midi-smf
-
-prompts/
-  system/global.txt   # global system prompt (composer persona + hard rules)
-  user/*.txt          # your prompts (filename order = suite order)
-
-runs/                 # auto-created per full suite run with all artifacts
-```
-
----
-
-## Writing prompts (how to control meter)
-
-**Meter is specified in your prompt text** via a simple directive at the top:
-
-```
-METER: 3/4
-```
-
-Supported mappings on a 1/16 grid (ticks per bar):
-
-- `3/4` → **12** ticks
-- `4/4` → **16** ticks
-- `2/4` → **8** ticks
-- `1/4` → **4** ticks
-
-If you omit `METER:`, the unit defaults to **3/4 (12 ticks)**.
-Advanced: you can also force `BAR_TICKS: <int>`. The system appends exact hard MIDI ranges and a meter reminder to each user prompt automatically.
-
-**Ordering:** files in `prompts/user/` are processed lexicographically; use numeric prefixes (e.g., `001_intro.txt`, `010_clouds.txt`, …).
-
-**Example prompt**
-
-```text
-METER: 3/4
-
-TITLE
-Airy chorale — six parts, soft dynamics.
-
-INSTRUMENTS (EXACT)
-[alto_flute, violin, bass_clarinet, trumpet, cello, double_bass].
-
-CONSTRAINTS
-Monophony per instrument; time uses only add {1,2,3,4}; durations fit gaps; pitch add/sub only; no overlaps.
-
-GOAL
-A luminous, stepwise texture with occasional small leaps and corrective motion. Close but non-triadic vertical colors.
-```
-
----
-
-## Quick start
-
-1. **Write prompts** in `prompts/user/` (include `METER: ...` in the text when you need a meter change).
-2. **Generate the suite:**
+Install Python deps:
 
 ```bash
-python compose_suite.py
+pip install -r requirements.txt
 ```
 
-**Outputs (per run) in `runs/<timestamp>_suite/`:**
-
-- `composition_suite.json` — the stitched, multi-track PT output (for visualisers/MIDI export)
-- `schedule.json` — unit start offsets & meters
-- `pt_journal.json` — compact log of posted/executed PTs
-- `prompts_and_summaries.txt` — the rendered prompts and computed summaries
-- `manifest.json` — filenames & totals
-
-_(Optionally mirrored elsewhere by your own scripts.)_
-
----
-
-## MIDI export
-
-This repo ships with a small Node tool that converts the stitched PT JSON to a Standard MIDI File.
-
-### One-time setup
+Install Node deps (one-time, for MIDI):
 
 ```bash
 npm install
 ```
 
-### New runs (automatic)
+## Configuration
 
-When you run:
+### 1) OpenAI API key
 
-```bash
-python compose_suite.py
+Create `secrets.py` in repo root:
+
+```python
+OPENAI_API_KEY = "sk-..."
 ```
 
-the pipeline writes:
+Or set `OPENAI_API_KEY` in your shell.
 
-- `runs/<ts>_suite/composition_suite.json`
-- `runs/<ts>_suite/composition_suite.mid` ← **MIDI (auto)**
-- plus the usual logs and summaries
+### 2) DCN account key (optional)
 
-> If Node isn’t installed or dependencies are missing, the run still completes; only the MIDI step is skipped with a warning.
-
-### Past runs (retroactive)
-
-You can create a `.mid` for any earlier suite folder:
+If `PRIVATE_KEY` is set, it is used for DCN auth.
+If not set, the run creates a temporary account.
 
 ```bash
-node tools/pt2midi.js runs/<ts>_suite/composition_suite.json runs/<ts>_suite/composition_suite.mid
+export PRIVATE_KEY=0x...
 ```
 
-**Latest run quick command (bash):**
+### 3) DCN API endpoint
+
+Current endpoint is defined in `pt_config.py` (`API_BASE`).
+If you need local dev server, change it there.
+
+### 4) Instrument setup
+
+Default config file is `instruments.json`.
+You can override with:
 
 ```bash
-latest="$(ls -dt runs/*_suite | head -1)"
-node tools/pt2midi.js "$latest/composition_suite.json" "$latest/composition_suite.mid"
+export INSTRUMENT_CONFIG=/absolute/path/to/instruments.json
 ```
 
-**Batch all runs (bash):**
+## Prompt Files
+
+Put prompt files in:
+
+- `prompts/user/*.txt`
+- `prompts/user/*.template.json` (also supported)
+
+Files are processed in lexicographic order.
+Use names like `001.txt`, `002.txt`, etc.
+
+Supported inline directives in prompt text:
+
+- `METER: <num>/<den>` (e.g. `METER: 3/4`)
+- `BAR_TICKS: <int>`
+
+If neither is provided, default is 12 ticks (3/4 on 1/16 grid).
+
+## Quick Start
+
+Run all prompt files:
 
 ```bash
-for d in runs/*_suite; do
-  [ -f "$d/composition_suite.json" ] && \
-  node tools/pt2midi.js "$d/composition_suite.json" "$d/composition_suite.mid"
-done
+python3 compose_suite.py
 ```
 
-> The converter uses the per-instrument GM programs/banks from `instrument_meta` (if present). It also embeds time-signature marks from the `numerator`/`denominator` streams.
-
-### Run only selected prompts & resume incomplete runs
-
-You don’t have to render the whole suite every time.
-
-#### Run a subset (via `ONLY=`)
-
-Use the `ONLY` env var to filter `prompts/user/*` by filename (glob patterns supported):
+Run a subset:
 
 ```bash
-# single file
-ONLY=001.txt python compose_suite.py
-
-# prefix match
-ONLY=010* python compose_suite.py
-
-# any 00x file
-ONLY=00?.txt python compose_suite.py
+ONLY=001.txt python3 compose_suite.py
+ONLY='00?.txt' python3 compose_suite.py
 ```
 
-Files are still processed in lexicographic order **after** filtering.
-
-#### Resume an unfinished run (`--resume`)
-
-Every run checkpoints into `runs/<timestamp>_suite/`. If a render stops part-way, you can continue from where it left off:
+Resume an interrupted suite:
 
 ```bash
-python compose_suite.py --resume runs/20251020-195317_suite
+python3 compose_suite.py --resume runs/<timestamp>_suite
 ```
 
-What resume does:
+## Model Settings
 
-- Reuses the saved template order and already-finished units
-- Preserves the rolling PT context so later bars stay musically consistent
-- Keeps writing into the same suite folder
+Defaults:
 
-You’ll also see periodic partial outputs for quick inspection:
+- `OPENAI_MODEL=gpt-5.2`
+- `OPENAI_REASONING_EFFORT=medium`
+
+Override example:
+
+```bash
+OPENAI_MODEL=gpt-5.2 OPENAI_REASONING_EFFORT=high python3 compose_suite.py
+```
+
+Reasoning summaries are printed when the model response completes (not token-streamed live by current implementation).
+
+## Context Chaining Controls
+
+The generator can include prior model JSON bundles as context for continuity.
+
+CLI flags:
+
+- `--context-last all|N` (default `all`)
+- `--context-budget <chars>` (default `15000`)
+
+Equivalent env vars:
+
+- `CONTEXT_LAST`
+- `CONTEXT_BUDGET_CHARS`
+
+Examples:
+
+```bash
+python3 compose_suite.py --context-last 1
+python3 compose_suite.py --context-last all --context-budget 30000
+CONTEXT_LAST=0 python3 compose_suite.py
+```
+
+## Checkpointing and Partial Outputs
+
+Checkpoint/partial settings:
+
+- `--checkpoint-every <K>` (default 5)
+- env var `CHECKPOINT_EVERY`
+
+Partial files:
 
 - `composition_suite.partial.json`
 - `schedule.partial.json`
 
-Tune how often those are emitted with:
+## MIDI Export
+
+Automatic MIDI export runs at the end unless disabled.
+
+Disable MIDI export:
 
 ```bash
-# write partial stitched outputs every K units (default 5)
-python compose_suite.py --checkpoint-every 3
-# or via env var
-CHECKPOINT_EVERY=3 python compose_suite.py
+NO_MIDI=1 python3 compose_suite.py
 ```
 
-Tip: to resume the **most recent** suite quickly:
+Create MIDI later from an existing run:
 
 ```bash
-latest="$(ls -dt runs/*_suite | head -1)"
-python compose_suite.py --resume "$latest"
+node tools/pt2midi.js runs/<timestamp>_suite/composition_suite.json runs/<timestamp>_suite/composition_suite.mid
 ```
 
-## How continuity across prompts works
+## DCN Preflight and Transformations
 
-After each unit, we capture the model’s **raw PT JSON** (minified) and feed **the entire accumulated history** of those bundles into the next call as a special _reference_ system message.
+At startup, the runner checks `/feature`, `/particle`, `/execute` and ensures required transformations exist.
 
-- The model sees exactly what it previously emitted (bars/sections, features, run_plan, seeds, etc.).
-- We instruct it **not to echo** those prior objects; it must return **only one JSON object** for the current unit.
-- Literal reuse becomes possible: when you ask to “reuse the Background Loop from the reference bundle that has N=… (transpose +2, rename),” the model can copy the prior structure.
-- We no longer pass earlier user prompts or summaries into the model’s context. Those remain in `runs/<ts>_suite/prompts_and_summaries.txt` for human reading.
+Required transformation names:
 
-### Controlling how much prior JSON the model sees (context window)
+- `add`
+- `subtract`
+- `mul`
+- `div`
 
-By default, each unit call includes a **system “reference” block** containing prior **model JSON bundles** (not your text prompts). You can now control _how many_ of those previous bundles are included, and cap their total size.
+By default, missing ones are auto-created.
 
-**Flags / env vars**
-
-- `--context-last N` or `CONTEXT_LAST=N`
-
-  - `all` (default) → include **all** prior bundles (subject to budget)
-  - `1` → include **only the last** prior bundle
-  - `0` → include **none** (each unit composes in isolation)
-  - Any integer `N≥0` is accepted
-
-- `--context-budget CHARS` or `CONTEXT_BUDGET_CHARS=CHARS`
-
-  - Max characters from prior bundles to embed (default **15000**).
-  - If the budget is tight, fewer than `N` may be included.
-
-**Behavior**
-
-- The generator packs the **latest bundles first** until the budget is reached.
-- Only the **model’s JSON outputs** are included, never earlier user prompts.
-- Works with **resume**: you can change these flags mid-run; inclusion is recomputed from the stored bundle list.
-
-**When to use what**
-
-- `--context-last 1` — great for sections that should **literally repeat** or closely reference the immediately preceding unit.
-- `--context-last all` — best for **long-range continuity** and thematic recall across many units.
-- `--context-last 0` — useful for **independent sections** or A/B experiments.
-
-**Examples**
+Disable auto-bootstrap:
 
 ```bash
-# Only the last prior bundle (tight repeat control)
-python compose_suite.py --context-last 1
-
-# All prior bundles, but allow a bigger budget
-python compose_suite.py --context-last all --context-budget 30000
-
-# No prior context (fresh start every unit)
-python compose_suite.py --context-last 0
-
-# Using env vars instead of flags
-CONTEXT_LAST=1 CONTEXT_BUDGET_CHARS=20000 python compose_suite.py
+DCN_AUTO_BOOTSTRAP_TRANSFORMS=0 python3 compose_suite.py
 ```
 
-> Tip: If you see the model missing a repeat because the reference didn’t fit, raise `--context-budget` or reduce `--context-last` so the _most recent_ bundle always fits.
+## End-to-End Example
 
----
+```bash
+cd chain-of-thoughts
+pip install -r requirements.txt
+npm install
 
-## Validation & guardrails (what the generator enforces)
+# Optional: stable account
+export PRIVATE_KEY=0x...
 
-- **Allowed ops:** `add`, `subtract`, `mul`, `div` (exact spelling).
-- **Duration:** live values must be in `{1,2,3,4}`; automatically **capped to next onset and bar end** for safety.
-- **Pitch:** `add`/`subtract` only; kept inside **hard MIDI ranges** (per instrument).
-- **Meter:** seeds set from your `METER:` directive; meter dims use constant `add 0`.
-- **Monophony:** enforced via time/duration rules and capping.
-
-If a bundle violates constraints, the run raises with a clear error pointing to the offending feature/dimension.
-
----
+# Run only first prompt
+ONLY=001.txt python3 compose_suite.py
+```
 
 ## Troubleshooting
 
-- `ModuleNotFoundError: dcn` → Install the DCN SDK so `import dcn` works.
-- Model output isn’t valid JSON → Tighten the prompt (“return the bundle(s) only; one JSON object; no prose”).
-- Notes overlap or spill → The runner caps durations to the next onset/bar end, but keep your durations ≤ smallest time step to remain musical.
-- MIDI export fails → Ensure Node 18+ and `npm install` were executed; check the input path to `composition_suite.json`.
+### `Auth failed — missing tokens`
 
----
+- Confirm DCN server is reachable and `/nonce/<address>` + `/auth` work.
+- Confirm your `PRIVATE_KEY` format (if set).
+
+### `Failed to parse feature`
+
+- Usually means payload mismatch with server schema.
+- This repo already strips internal fields before posting; if this reappears, inspect `runs/<suite>/errors/*.server.txt`.
+
+### Missing `.mid` file
+
+- Make sure you did **not** run with `NO_MIDI=1`.
+- Install Node deps with `npm install`.
+- If needed, run `tools/pt2midi.js` manually.
+
+### `Cannot find module 'jzz'`
+
+```bash
+npm install
+```
+
+### Preflight failures
+
+- Check `API_BASE` in `pt_config.py`.
+- Verify DCN server supports required endpoints.
+
+## Key Files
+
+- `compose_suite.py`: orchestration, checkpointing, stitching, optional MIDI export
+- `pt_generate.py`: single-unit generation + DCN post/execute pipeline
+- `dcn_client.py`: auth, preflight, feature/particle/execute/transformation calls
+- `pt_config.py`: API base + instrument loading
+- `pt_prompts.py`: prompt loading, directives, meter/ticks injection
+- `execute_normalize.py`: execute response normalization and validation
 
 ## License
 

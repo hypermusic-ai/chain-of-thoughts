@@ -20,6 +20,20 @@ from pt_config import (
 )
 from pt_prompts import load_system_prompt, render_user_prompt_file, PROMPTS_DIR
 from dcn_client import DCNClient
+from execute_normalize import (
+    build_running_instances,
+    normalize_execute_samples,
+    require_scalar_streams,
+)
+
+SCALAR_DIM_ORDER = (
+    "time",
+    "duration",
+    "pitch",
+    "velocity",
+    "numerator",
+    "denominator",
+)
 
 # ---------- local helpers ----------
 def _runs_root() -> pathlib.Path:
@@ -38,14 +52,6 @@ def _save_json(path: pathlib.Path, obj: Any):
 def _save_text(path: pathlib.Path, text: str):
     with open(path, "w", encoding="utf-8") as f:
         f.write(text)
-
-def _normalize_exec(samples_list: List[dict]) -> Dict[str, List[int]]:
-    st: Dict[str, List[int]] = {}
-    for s in samples_list:
-        tail = (s["feature_path"].split("/")[-1] if s["feature_path"] else "").strip().lower()
-        st.setdefault(tail, [])
-        st[tail] = list(s["data"])
-    return st
 
 def _cap_durations(times: List[int], durations: List[int], bar_ticks: int, *, allow_overlap: bool) -> tuple[list[int], list[int]]:
     """
@@ -120,6 +126,49 @@ def _must_uint(x, label: str) -> int:
         raise RuntimeError(f"{label} must be unsigned (>= 0)")
     return x
 
+
+def _canonicalize_dimensions(pt: Dict[str, Any], *, label: str, bar_label: str) -> None:
+    dims = list(pt.get("dimensions") or [])
+    by_name: Dict[str, Dict[str, Any]] = {}
+    for dim in dims:
+        dim_name = str(dim.get("feature_name") or "").strip().lower()
+        if not dim_name:
+            raise RuntimeError(f"[{label}] {bar_label}: dimension missing feature_name in PT '{pt.get('name', '')}'")
+        if dim_name in by_name:
+            raise RuntimeError(
+                f"[{label}] {bar_label}: duplicated dimension '{dim_name}' in PT '{pt.get('name', '')}'"
+            )
+        by_name[dim_name] = dim
+
+    missing = [name for name in SCALAR_DIM_ORDER if name not in by_name]
+    if missing:
+        raise RuntimeError(
+            f"[{label}] {bar_label}: PT '{pt.get('name', '')}' missing required dimensions: {', '.join(missing)}"
+        )
+
+    pt["dimensions"] = [by_name[name] for name in SCALAR_DIM_ORDER]
+
+
+def _feature_deploy_payload(pt: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Convert internal PT shape to server Feature proto JSON shape.
+    Server expects:
+      { "name": str, "dimensions": [ { "transformations": [ {name,args}, ... ] }, ... ] }
+    and rejects unknown keys like dimension.feature_name.
+    """
+    out_dims: List[Dict[str, Any]] = []
+    for dim in list(pt.get("dimensions") or []):
+        tr_list: List[Dict[str, Any]] = []
+        for tr in list(dim.get("transformations") or []):
+            tr_list.append(
+                {
+                    "name": str(tr.get("name") or ""),
+                    "args": [int(a) for a in list(tr.get("args") or [])],
+                }
+            )
+        out_dims.append({"transformations": tr_list})
+    return {"name": str(pt.get("name") or ""), "dimensions": out_dims}
+
 # ---------- context summary ----------
 def _summarize_unit(per_instr_unit: Dict[str, Dict[str, List[int]]],
                     bars_count: int, total_ticks: int, num: int, den: int,
@@ -169,6 +218,40 @@ def _extract_output_text_parts(resp) -> List[str]:
     except Exception:
         pass
     return parts
+
+def _extract_reasoning_summary(resp) -> str:
+    """
+    Best-effort extraction of reasoning summary text from Responses API output.
+    """
+    snippets: List[str] = []
+
+    # Dict-like path (model_dump / to_dict)
+    data = _resp_to_dict_safe(resp)
+    for item in data.get("output", []) or []:
+        if not isinstance(item, dict):
+            continue
+        if item.get("type") != "reasoning":
+            continue
+        for summ in item.get("summary", []) or []:
+            if isinstance(summ, dict):
+                txt = (summ.get("text") or "").strip()
+                if txt:
+                    snippets.append(txt)
+
+    # Object-like fallback
+    if not snippets:
+        try:
+            for item in getattr(resp, "output", []) or []:
+                if getattr(item, "type", None) != "reasoning":
+                    continue
+                for summ in getattr(item, "summary", []) or []:
+                    txt = (getattr(summ, "text", None) or "").strip()
+                    if txt:
+                        snippets.append(txt)
+        except Exception:
+            pass
+
+    return "\n".join(snippets).strip()
 
 def _first_json_block(text: str) -> str:
     """Heuristic: slice the first {...} block if the model wrapped JSON in prose."""
@@ -275,8 +358,15 @@ def generate_unit_from_template(
     instr_enum = ordered_instrs
     feat_count = len(instr_enum)
 
+    model_name = os.getenv("OPENAI_MODEL", "gpt-5.2")
+    reasoning_effort = os.getenv("OPENAI_REASONING_EFFORT", "medium").strip().lower()
+    if reasoning_effort not in {"minimal", "low", "medium", "high"}:
+        reasoning_effort = "medium"
+
+    print(f"[{label}] OpenAI model={model_name} reasoning_effort={reasoning_effort}")
+
     resp = oai.responses.create(
-            model="gpt-5",
+            model=model_name,
             input=messages,
             text = {
                 "format": {
@@ -413,11 +503,14 @@ def generate_unit_from_template(
                     "strict": True
                 }
             },   
-            reasoning={"effort": "medium"}, # set minimal/low/medium/high (time vs. reasoning trade-off)
+            reasoning={"effort": reasoning_effort, "summary": "auto"},
         )
 
 
     raw_text = (resp.output_text or "").strip()
+    reasoning_summary = _extract_reasoning_summary(resp)
+    if reasoning_summary:
+        print(f"[{label}] Reasoning summary:\n{reasoning_summary}\n")
 
     obj = json.loads(raw_text)
     bar_bundles = (
@@ -468,23 +561,26 @@ def generate_unit_from_template(
             rp["seeds"]["numerator"]   = NUM
             rp["seeds"]["denominator"] = DEN
         for feat in feats:
+            _canonicalize_dimensions(feat.get("pt", {}), label=label, bar_label=bar_label)
             for d in feat.get("pt", {}).get("dimensions", []):
                 fn = (d.get("feature_name") or "").strip().lower()
                 if fn in ("numerator", "denominator"):
                     d["transformations"] = [{"name":"add","args":[0]}]
 
-        # Register PTs
+        # Register PTs + scalar particle wrappers (one particle per feature)
+        feature_to_particle: Dict[str, str] = {}
         for i, feat in enumerate(feats, start=1):
             pt_name = feat["pt"]["name"]
             instr = (feat.get("meta") or {}).get("instrument", "")
             print(f"[{label}] {bar_label}: POST feature {i}/{len(feats)} name={pt_name} instr={instr}")
+            deploy_payload = _feature_deploy_payload(feat["pt"])
             try:
-                res = dcn.post_feature(feat["pt"], acct=acct)
+                dcn.post_feature(deploy_payload, acct=acct)
             except Exception as e:
                 if session_dir:
                     errdir = session_dir / "errors"
                     errdir.mkdir(parents=True, exist_ok=True)
-                    _save_json(errdir / f"{label}.{bar_label}.feature_{i}.{instr}.json", feat["pt"])
+                    _save_json(errdir / f"{label}.{bar_label}.feature_{i}.{instr}.json", deploy_payload)
                     _save_text(errdir / f"{label}.{bar_label}.feature_{i}.{instr}.error.txt", repr(e))
                     # If requests.HTTPError, capture server body:
                     try:
@@ -495,6 +591,35 @@ def generate_unit_from_template(
                         pass
                 raise
 
+            dims_count = len(feat.get("pt", {}).get("dimensions", []))
+            particle_name = f"{pt_name}__particle"
+            particle_payload = {
+                "name": particle_name,
+                "feature_name": pt_name,
+                "composite_names": [""] * dims_count,
+                "condition_name": "",
+                "condition_args": [],
+            }
+
+            print(f"[{label}] {bar_label}: POST particle {i}/{len(feats)} name={particle_name} root={pt_name}")
+            try:
+                dcn.post_particle(particle_payload, acct=acct)
+            except Exception as e:
+                if session_dir:
+                    errdir = session_dir / "errors"
+                    errdir.mkdir(parents=True, exist_ok=True)
+                    _save_json(errdir / f"{label}.{bar_label}.particle_{i}.{instr}.json", particle_payload)
+                    _save_text(errdir / f"{label}.{bar_label}.particle_{i}.{instr}.error.txt", repr(e))
+                    try:
+                        import requests
+                        if isinstance(e, requests.HTTPError) and e.response is not None:
+                            _save_text(errdir / f"{label}.{bar_label}.particle_{i}.{instr}.server.txt", e.response.text)
+                    except Exception:
+                        pass
+                raise
+
+            feature_to_particle[pt_name] = particle_name
+
 
         # Execute and collect
         dims_by_name = {feat["pt"]["name"]: feat["pt"]["dimensions"] for feat in feats}
@@ -503,22 +628,33 @@ def generate_unit_from_template(
         for rp in runp:
             fname = rp["feature_name"]
             dims = dims_by_name.get(fname, [])
+            particle_name = feature_to_particle.get(fname)
+            if not particle_name:
+                raise RuntimeError(f"[{label}] {bar_label}: no particle mapping found for feature '{fname}'")
             seeds = {k:int(v) for (k,v) in (rp.get("seeds") or {}).items()}
             N = int(rp.get("N", 4))
+            running_instances = build_running_instances(seeds, dims)
 
-            print(f"[{label}] {bar_label}: EXEC {fname} N={N}")
-            samples = dcn.execute_pt(acct, fname, N, seeds, dims)
-            streams = _normalize_exec(samples)
+            print(f"[{label}] {bar_label}: EXEC particle={particle_name} root_feature={fname} N={N}")
+            samples = dcn.execute_particle(acct, particle_name, N, running_instances)
+            streams, unknown_paths = normalize_execute_samples(samples)
+            require_scalar_streams(
+                streams,
+                label=f"{label} {bar_label} {particle_name}",
+                unknown_paths=unknown_paths,
+            )
             exec_by_feature[fname] = streams
 
             # Journal entry for execution (counts only)
             pt_journal.append({
-                "action": "execute_pt",
+                "action": "execute_particle",
                 "unit": label,
                 "bar_index": local_idx,
                 "pt_name": fname,
+                "particle_name": particle_name,
                 "N": N,
                 "seeds": seeds,
+                "running_instances_count": len(running_instances),
                 "sample_counts": {k: len(v) for k, v in streams.items()}
             })
 

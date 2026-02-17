@@ -34,6 +34,13 @@ import time
 from tqdm import tqdm
 
 
+def _env_bool(name: str, default: bool) -> bool:
+    raw = os.getenv(name)
+    if raw is None:
+        return default
+    return raw.strip().lower() in ("1", "true", "yes", "on")
+
+
 def _mk_bundle_context(
     snippets: List[str],
     budget_chars: int = 15000,
@@ -283,6 +290,22 @@ def main():
         is_resume = False
 
     _setup_logging(suite_dir, args.verbose)
+
+    auto_bootstrap_transformations = _env_bool("DCN_AUTO_BOOTSTRAP_TRANSFORMS", True)
+    logging.info(
+        "Running DCN endpoint preflight checks (/feature, /particle, /execute), "
+        "required transformations bootstrap=%s...",
+        "on" if auto_bootstrap_transformations else "off",
+    )
+    try:
+        client.preflight_endpoints(
+            acct=acct,
+            ensure_transformations=True,
+            auto_create_transformations=auto_bootstrap_transformations,
+        )
+    except Exception as exc:
+        raise SystemExit(f"Preflight failed before generation: {exc}") from exc
+    logging.info("Preflight checks passed.")
 
     # Discover templates / load from checkpoint
     if is_resume:
