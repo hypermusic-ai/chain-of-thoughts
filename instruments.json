@@ -1,4 +1,20 @@
 {
+  "_instructions": [
+    "How to add more instruments:",
+    "1) Add a new unique id to ordered_instruments. This id must exactly match a key under instruments and instrument_meta.",
+    "2) Under instruments, add that id with: range, tess, display_name, gm_program, polyphonic.",
+    "3) Under instrument_meta, add the same id with: display_name, gm_program, bank.",
+    "4) range and tess are MIDI note numbers [low, high]. Keep low <= high.",
+    "5) Use realistic playable ranges; the generator enforces pitch behavior against these values.",
+    "6) Set polyphonic=true only for instruments that should allow overlapping notes/chords.",
+    "7) Keep ordered_instruments in the exact track/render order you want in outputs.",
+    "8) gm_program uses General MIDI program numbers (0-based in this project).",
+    "9) bank defaults to 0 for standard GM sounds; change only if your synth setup needs it.",
+    "10) After edits, run a quick generation (e.g. ONLY=001.txt) to validate no schema/id mismatches.",
+    "Common mistake: adding an id to ordered_instruments but forgetting to add the same id in instruments and instrument_meta.",
+    "Example id naming: snake_case like alto_flute, bass_clarinet, electric_bass.",
+    "Important: this is JSON, so use double quotes and no trailing commas."
+  ],
   "ordered_instruments": [
     "grand_piano"
   ],
